@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block sidebar %}
+<div class="ch-sidebar">
+  <div class="ch-sidebar-header">
+    <h3>{{ workspace.name }}</h3>
+    <p>{{ workspace.description or '' }}</p>
+  </div>
+  <div class="ch-sidebar-body">
+    <div class="ch-section">
+      <div class="ch-section-title">Channels</div>
+      {% for ch in channels %}
+      <a class="ch-item" href="/channels/{{ ch.channel_id }}">
+        <span class="ch-prefix">
+          {% if ch.type == 'public' %}#
+          {% elif ch.type == 'private' %}🔒
+          {% else %}💬{% endif %}
+        </span>
+        <span class="ch-name">{{ ch.name }}</span>
+      </a>
+      {% endfor %}
+      {% if joinable %}
+      <div class="ch-section-title" style="margin-top:0.5rem;">Browse</div>
+      {% for ch in joinable %}
+      <form method="post" action="/channels/{{ ch.channel_id }}/join">
+        <button type="submit" class="ch-item" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;">
+          <span class="ch-prefix" style="color:var(--green);">+</span>
+          <span class="ch-name" style="color:var(--text3);">{{ ch.name }}</span>
+        </button>
+      </form>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+  <div class="ch-sidebar-footer">
+    <button class="btn btn-ghost btn-sm" style="width:100%;"
+            onclick="document.getElementById('create-ch-modal').classList.remove('hidden')">
+      + New Channel
+    </button>
+    <div style="margin-top:0.5rem;">
+      <button class="btn btn-ghost btn-sm" style="width:100%;"
+              onclick="document.getElementById('dm-modal').classList.remove('hidden')">
+        💬 Direct Message
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="ws-page">
+  <div class="main-header">
+    <div class="main-header-left">
+      <span style="font-size:1.2rem;">🏢</span>
+      <h2>{{ workspace.name }}</h2>
+    </div>
+    {% if is_admin %}
+    <button class="btn btn-ghost btn-sm"
+            onclick="document.getElementById('invite-modal').classList.remove('hidden')">
+      + Invite Member
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="ws-main">
+    <div class="ws-grid">
+      <!-- Channels Panel -->
+      <div>
+        <div class="section-label">
+          <span>Channels you're in</span>
+          <button class="btn btn-ghost btn-sm"
+                  onclick="document.getElementById('create-ch-modal').classList.remove('hidden')">
+            + New
+          </button>
+        </div>
+        <div class="channel-cards">
+          {% for ch in channels %}
+          <a href="/channels/{{ ch.channel_id }}" class="ch-card">
+            <div class="ch-card-prefix">
+              {% if ch.type == 'public' %}#
+              {% elif ch.type == 'private' %}🔒
+              {% else %}💬{% endif %}
+            </div>
+            <h4>{{ ch.name }}</h4>
+            <p>{{ ch.type }}</p>
+          </a>
+          {% endfor %}
+          {% for ch in joinable %}
+          <form method="post" action="/channels/{{ ch.channel_id }}/join">
+            <button type="submit" class="ch-card ch-card-join"
+                    style="width:100%;text-align:left;font-family:inherit;">
+              <div class="ch-card-prefix">+</div>
+              <h4>{{ ch.name }}</h4>
+              <p>Click to join</p>
+            </button>
+          </form>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Members Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Members ({{ members|length }})</h3>
+        </div>
+        <div class="panel-body" style="padding:0.5rem 1rem;">
+          {% for m in members %}
+          <div class="member-item">
+            <div class="avatar-sm" style="width:32px;height:32px;font-size:0.8rem;border-radius:8px;">
+              {{ m.username[0].upper() }}
+            </div>
+            <div class="member-info">
+              <div class="member-name">
+                {{ m.username }}
+                {% if m.is_admin %}
+                  <span class="badge badge-admin">admin</span>
+                {% endif %}
+              </div>
+              {% if m.nickname %}<div class="member-nick">{{ m.nickname }}</div>{% endif %}
+            </div>
+            {% if is_admin and not m.is_admin %}
+            <div class="member-actions">
+              <form method="post" action="/workspaces/{{ workspace.workspace_id }}/promote/{{ m.user_id }}">
+                <button type="submit" class="btn btn-ghost btn-sm" title="Promote">↑</button>
+              </form>
+              <form method="post" action="/workspaces/{{ workspace.workspace_id }}/remove/{{ m.user_id }}">
+                <button type="submit" class="btn btn-danger btn-sm" title="Remove">×</button>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Channel Modal -->
+<div id="create-ch-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>New Channel</h3>
+    <form method="post" action="/workspaces/{{ workspace.workspace_id }}/channels/create">
+      <div class="form-group">
+        <label>Channel Name</label>
+        <input type="text" name="name" placeholder="e.g. general" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select name="type" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:0.65rem 0.9rem;color:var(--text);font-family:var(--font);font-size:0.95rem;">
+          <option value="public"># Public — anyone in workspace can join</option>
+          <option value="private">🔒 Private — invite only</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost"
+                onclick="document.getElementById('create-ch-modal').classList.add('hidden')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">Create Channel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Invite Modal -->
+<div id="invite-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Invite to {{ workspace.name }}</h3>
+    <form method="post" action="/workspaces/{{ workspace.workspace_id }}/invite">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" name="email" placeholder="colleague@example.com" required autofocus>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost"
+                onclick="document.getElementById('invite-modal').classList.add('hidden')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">Send Invite</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DM Modal -->
+<div id="dm-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Start a Direct Message</h3>
+    <form method="post" action="/workspaces/{{ workspace.workspace_id }}/direct">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" name="target_username" placeholder="Enter username" required autofocus>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost"
+                onclick="document.getElementById('dm-modal').classList.add('hidden')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">Open DM</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
+});
+</script>
+{% endblock %}

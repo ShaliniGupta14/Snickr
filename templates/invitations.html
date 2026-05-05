@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <h2>Invitations</h2>
+</div>
+{% if invites %}
+  {% for inv in invites %}
+  <div class="card invite-row">
+    <span>
+      <strong>{{ inv.workspace_name }}</strong>
+      — invited by {{ inv.invited_by }}
+    </span>
+    <div class="invite-actions">
+      <form method="post"
+            action="/invitations/{{ inv.invitation_id }}/accept">
+        <button class="btn-primary">Accept</button>
+      </form>
+      <form method="post"
+            action="/invitations/{{ inv.invitation_id }}/decline">
+        <button class="btn-danger">Decline</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="empty">No pending invitations.</p>
+{% endif %}
+{% endblock %}

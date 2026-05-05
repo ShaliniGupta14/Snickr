@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block sidebar %}{% endblock %}
+{% block content %}
+<div class="dashboard-page" style="flex:1;overflow-y:auto;padding:2.5rem 3rem;">
+
+  <div class="dash-hero">
+    <h1>Good day, {{ me.nickname or me.username }} 👋</h1>
+    <p>Your workspaces and invitations</p>
+  </div>
+
+  {% if invites %}
+  <div class="section-label">
+    <span>⚡ Pending Invitations</span>
+  </div>
+  <div class="invite-cards">
+    {% for inv in invites %}
+    <div class="invite-card">
+      <div class="invite-card-left">
+        <div class="invite-card-icon">📬</div>
+        <div class="invite-card-text">
+          <h4>{{ inv.workspace_name }}</h4>
+          <p>Invited by {{ inv.invited_by }}</p>
+        </div>
+      </div>
+      <div class="invite-card-actions">
+        <form method="post" action="/invitations/{{ inv.invitation_id }}/accept">
+          <button type="submit" class="btn btn-success btn-sm">Accept</button>
+        </form>
+        <form method="post" action="/invitations/{{ inv.invitation_id }}/decline">
+          <button type="submit" class="btn btn-danger btn-sm">Decline</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="section-label" style="margin-bottom:1rem;">
+    <span>🏢 Workspaces</span>
+    <button class="btn btn-ghost btn-sm"
+            onclick="document.getElementById('create-ws-modal').classList.remove('hidden')">
+      + New
+    </button>
+  </div>
+
+  <div class="cards-grid">
+    {% for ws in workspaces %}
+    <a href="/workspaces/{{ ws.workspace_id }}" class="ws-card">
+      <div class="ws-card-icon">{{ ws.name[0].upper() }}</div>
+      <h3>{{ ws.name }}</h3>
+      <p>{{ ws.description or 'No description' }}</p>
+    </a>
+    {% endfor %}
+    <div class="ws-card ws-card-add"
+         onclick="document.getElementById('create-ws-modal').classList.remove('hidden')"
+         style="cursor:pointer;">
+      <div class="add-icon">+</div>
+      <p>Create a workspace</p>
+    </div>
+  </div>
+</div>
+
+<!-- Create Workspace Modal -->
+<div id="create-ws-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Create a Workspace</h3>
+    <form method="post" action="/workspaces/create">
+      <div class="form-group">
+        <label>Workspace Name</label>
+        <input type="text" name="name" placeholder="e.g. Engineering" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Description <span style="color:var(--text3);font-weight:400">(optional)</span></label>
+        <input type="text" name="description" placeholder="What is this workspace for?">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost"
+                onclick="document.getElementById('create-ws-modal').classList.add('hidden')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">Create Workspace</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+document.getElementById('create-ws-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.add('hidden');
+});
+</script>
+{% endblock %}

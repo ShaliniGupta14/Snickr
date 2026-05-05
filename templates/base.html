@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>snickr{% if title %} — {{ title }}{% endif %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+  <!-- Workspace Rail -->
+  <div class="ws-rail">
+    <div class="logo">s</div>
+    <div class="ws-rail-divider"></div>
+    {% if workspaces %}
+      {% for ws in workspaces %}
+      <a href="/workspaces/{{ ws.workspace_id }}"
+         class="ws-icon {% if active_workspace_id == ws.workspace_id %}active{% endif %}"
+         title="{{ ws.name }}">
+        {{ ws.name[0].upper() }}
+      </a>
+      {% endfor %}
+    {% endif %}
+    <a href="/dashboard" class="ws-icon add" title="All workspaces">⊞</a>
+    <div class="ws-rail-bottom">
+      <a href="/search" class="btn-icon" title="Search" style="color:var(--text2);font-size:1.1rem;">🔍</a>
+      <a href="/logout" class="btn-icon" title="Logout" style="color:var(--text2);font-size:1rem;">⏻</a>
+      {% if me %}
+      <div class="avatar-sm" title="{{ me.username }}">
+        {{ me.username[0].upper() }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% block sidebar %}{% endblock %}
+  {% block content %}{% endblock %}
+</div>
+
+<script>
+// Auto-resize textareas
+document.querySelectorAll('textarea').forEach(ta => {
+  ta.addEventListener('input', () => {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
+  });
+});
+// Send on Ctrl+Enter / Cmd+Enter
+document.querySelectorAll('textarea[name="body"]').forEach(ta => {
+  ta.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      ta.closest('form').submit();
+    }
+  });
+});
+</script>
+</body>
+</html>

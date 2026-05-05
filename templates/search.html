@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block sidebar %}{% endblock %}
+{% block content %}
+<div class="search-page" style="flex:1;">
+  <div class="search-header">
+    <h1>Search</h1>
+    <p style="color:var(--text3);font-size:0.88rem;margin-top:0.3rem;">
+      Search across all channels you have access to
+    </p>
+  </div>
+
+  <form class="search-bar" method="get" action="/search">
+    <input type="text" name="q" value="{{ q }}"
+           placeholder="Search messages..." autofocus>
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+
+  {% if q %}
+    <div class="result-count">
+      Found <strong>{{ results|length }}</strong>
+      result{{ 's' if results|length != 1 else '' }} for
+      <strong>"{{ q }}"</strong>
+    </div>
+    {% if results %}
+      {% for r in results %}
+      <div class="search-result">
+        <div class="result-meta">
+          <span class="result-ws">{{ r.workspace_name }}</span>
+          <span style="color:var(--text3);">/</span>
+          <a class="result-ch" href="/channels/{{ r.channel_id }}">
+            {% if r.channel_type == 'public' %}#{% elif r.channel_type == 'private' %}🔒{% else %}💬{% endif %}
+            {{ r.channel_name }}
+          </a>
+          <span class="result-type">{{ r.channel_type }}</span>
+          <span class="result-author">{{ r.author }}</span>
+          <span class="result-time">{{ r.posted_at.strftime('%b %d, %H:%M') }}</span>
+        </div>
+        <div class="result-body">{{ r.body }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <p>No messages found for "{{ q }}"</p>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">💬</div>
+      <p>Type something to search across your channels</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+cat > templates/channel.html << 'EOF'
+{% extends "base.html" %}
+{% block sidebar %}
+<div class="ch-sidebar">
+  <div class="ch-sidebar-header">
+    <h3>
+      {% if channel.type == 'public' %}#
+      {% elif channel.type == 'private' %}🔒
+      {% else %}💬{% endif %}
+      {{ channel.name }}
+    </h3>
+    <p><a href="/workspaces/{{ channel.workspace_id }}" style="color:var(--text3);">
+      ← {{ channel.workspace_name }}
+    </a></p>
+  </div>
+  <div class="ch-sidebar-body">
+    <div class="ch-section">
+      <div class="ch-section-title">Members ({{ members|length }})</div>
+      {% for m in members %}
+      <div class="ch-item" style="cursor:default;">
+        <div class="avatar-sm" style="width:24px;height:24px;font-size:0.7rem;border-radius:6px;flex-shrink:0;">
+          {{ m.username[0].upper() }}
+        </div>
+        <span class="ch-name">{{ m.username }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% if channel.type == 'private' %}
+  <div class="ch-sidebar-footer">
+    <button class="btn btn-ghost btn-sm" style="width:100%;"
+            onclick="document.getElementById('invite-modal').classList.remove('hidden')">
+      + Invite Member
+    </button>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main" style="flex:1;">
+  <div class="main-header">
+    <div class="main-header-left">
+      <span class="ch-type-icon">
+        {% if channel.type == 'public' %}#
+        {% elif channel.type == 'private' %}🔒
+        {% else %}💬{% endif %}
+      </span>
+      <h2>{{ channel.name }}</h2>
+    </div>
+    <div class="member-count">
+      <span>👥</span> {{ members|length }}
+    </div>
+  </div>
+
+  <div class="messages-area" id="msg-area">
+    {% if messages %}
+      <div class="msg-day-divider"><span>Messages</span></div>
+      {% for msg in messages %}
+      <div class="message">
+        <div class="msg-avatar">{{ msg.username[0].upper() }}</div>
+        <div class="msg-content">
+          <div class="msg-meta">
+            <span class="msg-author">{{ msg.username }}</span>
+            <span class="msg-time">{{ msg.posted_at.strftime('%b %d, %H:%M') }}</span>
+          </div>
+          <div class="msg-body">{{ msg.body }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-channel">
+        <div class="empty-icon">
+          {% if channel.type == 'public' %}#
+          {% elif channel.type == 'private' %}🔒
+          {% else %}💬{% endif %}
+        </div>
+        <p>This is the start of <strong>#{{ channel.name }}</strong></p>
+        <p style="font-size:0.82rem;margin-top:0.3rem;">Send a message to get the conversation going.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="message-input-area">
+    <form method="post" action="/channels/{{ channel.channel_id }}/post" id="msg-form">
+      <div class="message-input-box">
+        <textarea name="body" id="msg-input"
+                  placeholder="Message #{{ channel.name }}  (Cmd+Enter to send)"
+                  required rows="1"></textarea>
+        <div class="message-input-footer">
+          <button type="submit" class="btn btn-primary btn-sm">Send ↵</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if channel.type == 'private' %}
+<div id="invite-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Invite to #{{ channel.name }}</h3>
+    <form method="post" action="/channels/{{ channel.channel_id }}/invite">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" name="username" placeholder="Enter username" required autofocus>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost"
+                onclick="document.getElementById('invite-modal').classList.add('hidden')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Invite</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+document.getElementById('invite-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.add('hidden');
+});
+</script>
+{% endif %}
+
+<script>
+const area = document.getElementById('msg-area');
+if (area) area.scrollTop = area.scrollHeight;
+document.getElementById('msg-input').focus();
+</script>
+{% endblock %}
